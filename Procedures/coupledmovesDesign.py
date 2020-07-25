@@ -311,9 +311,9 @@ trans_init = 1.2, trans_final = 0.2, rot_init = 20, rot_final = 2, backrub_moves
 #Running the code!
 
 #Make sure that your protein is chain A and your protein ligand is chain X
-cleanATOM("alaComplex1.pdb")
-pose1 = pose_from_pdb("alaComplex1.clean.pdb")
-ref = pose_from_pdb("complex1.clean.pdb")
+cleanATOM("PDBs/alaComplex1.pdb")
+pose1 = pose_from_pdb("PDBs/alaComplex1.clean.pdb")
+ref = pose_from_pdb("PDBs/complex1.clean.pdb")
 
 #Establishing scorefunction
 scoreFA = get_fa_scorefxn()
@@ -330,18 +330,20 @@ pose1.fold_tree(ft)
 active_site_pdb = [357, 461, 465]
 active_site_pose = []
 
+#Generating residues to be worked on
 for res in active_site_pdb:
     for i in range(res - 1, res + 2):
         active_site_pose.append(pose1.pdb_info().pdb2pose('A', i))
-
+       
 ligand_pdb = [1]
 ligand_pose = []
        
 for res in ligand_pdb:
     ligand_pose.append(pose1.pdb_info().pdb2pose('X', res))
-    
-alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "testLog", "testOutput", 8, 4, 50, linear_perturb = True)
-#alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "test2Log", "default2Output", 4, 4, 50, linear_perturb = True)
+ 
+for i in range(1, 5): 
+    alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "reftest" + str(i) + "Log", "reftest" + str(i) + "Output", 8, 4, 50)
+
             
     
     

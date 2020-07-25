@@ -54,7 +54,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     init_seq = pose.sequence()
     ref_seq = ref_pose.sequence()
     
-    log_all = open(log_output + "_all.txt", "w+")
+    log_all = open("Logs/" + log_output + "_all.txt", "w+")
      
     """
     ===========================
@@ -158,16 +158,19 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     p = Pose()
     
     #1. Creating incrementation factors for rep_weight, kT, translation, and rotation
+    #   Creating temperature incrementation
     if linear_temp:
         slopekT = (temp_final - temp_init) / (inner_cycles * outer_cycles)
     else:
         gammakT = math.pow((temp_final / temp_init), (1.0 /(outer_cycles * inner_cycles)))
-        
+    
+    #   Creating repulsion incrementation
     if linear_rep:
         slopeRep = (rep_weight_final - rep_weight_init) / (outer_cycles)
     else:    
         gammaRep = math.pow((rep_weight_final / rep_weight_init), (1.0 / (outer_cycles)))
     
+    #   Creating perturbation incrementation
     if linear_perturb:
         slopeTrans = (trans_final - trans_init) / (outer_cycles * inner_cycles)
         slopeRot = (rot_final - rot_init) / (outer_cycles * inner_cycles)
@@ -175,10 +178,12 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         gammaTrans = math.pow((trans_final / trans_init), (1.0 / (outer_cycles * inner_cycles)))
         gammaRot = math.pow((rot_final / rot_init), (1.0 / (outer_cycles * inner_cycles)))
     
+    
+    
     for job in range(1, jobs + 1):
     
         #2. Housekeeping
-        log = open(log_output + "_" + str(job) + ".txt", "w+")
+        log = open("Logs/" + log_output + "_" + str(job) + ".txt", "w+")
         
         p.assign(pose_in)
         p.pdb_info().name(job_output + '_' + str(job))
@@ -264,7 +269,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         mc.recover_low(p)
         pyMOLMover.apply(p)
         
-        p.dump_pdb(job_output + "_" + str(job) + ".pdb")
+        p.dump_pdb("PDBs/" + job_output + "_" + str(job) + ".pdb")
         
         designed_seq = p.sequence()
         
@@ -297,10 +302,9 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
 #Running the code!
 
 #Make sure that your protein is chain A and your protein ligand is chain X
-cleanATOM("alaComplex1.pdb")
-pose1 = pose_from_pdb("alaComplex1.clean.pdb")
-#pose2 = pose_from_pdb("test3Output_6.pdb")
-ref = pose_from_pdb("complex1.clean.pdb")
+cleanATOM("PDBs/alaComplex1.pdb")
+pose1 = pose_from_pdb("PDBs/alaComplex1.clean.pdb")
+ref = pose_from_pdb("PDBs/complex1.clean.pdb")
 
 #Establishing scorefunction
 scoreFA = get_fa_scorefxn()
@@ -317,6 +321,7 @@ pose1.fold_tree(ft)
 active_site_pdb = [357, 461, 465]
 active_site_pose = []
 
+#Generating residues to be worked on
 for res in active_site_pdb:
     for i in range(res - 1, res + 2):
         active_site_pose.append(pose1.pdb_info().pdb2pose('A', i))
@@ -328,8 +333,7 @@ for res in ligand_pdb:
     ligand_pose.append(pose1.pdb_info().pdb2pose('X', res))
  
 for i in range(1, 5): 
-    alaDesign(pose2, ref, scoreFA, active_site_pose, ligand_pose, "reftest" + str(i) + "Log", "reftest" + str(i) + "Output", 8, 4, 50)
-    #alaDesign(pose3, ref, scoreFA, active_site_pose, ligand_pose, "ref2Test2test1_1_" + str(i) + "Log", "ref2Test2test1_1_" + str(i) + "Output", 8, 4, 50)
+    alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "test" + str(i) + "Log", "test" + str(i) + "Output", 8, 4, 50)
             
     
     

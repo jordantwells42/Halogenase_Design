@@ -4,7 +4,7 @@ For the design of Tryptophan Halogenases with the Rosetta Software Suite.
 ### Procedures
 defaultDesign - Standard design procedure 
 
-coupledmovesDesign - Coupled moves design procedure, not optimized yet
+coupledmovesDesign - Coupled moves design procedure, currently not operable, needs to be updated
 
 
 ### Accesories
