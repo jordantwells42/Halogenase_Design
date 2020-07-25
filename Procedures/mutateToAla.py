@@ -1,3 +1,8 @@
+"""
+Mutates the active site of a given residue to all alanines
+"""
+
+
 from pyrosetta import *
 from rosetta import *
 from pyrosetta.toolbox.mutants import *

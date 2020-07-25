@@ -30,6 +30,8 @@ Performs high resolution refinement and design of an enzyme active site with an 
     jobs: how many different decoys to design
     outer_cycles: how many cycles of repulsion ramping
     inner_cycles: how many cycles of refinement per cycle of repulsion ramping
+    linear_temp: decides whether to use linear temperature/kT decrements from initial to final or a geometric progression
+    linear_rep: decides whether to use linear repulsion weight increments from initial to final or a geometric progression 
     linear_perturb: decides whether to use linear perturbation decrements from initial to final or a geometric progression 
     temp_init: initial temperature for simulated annealing
     temp_final: final temperature for simulated annealing
@@ -332,6 +334,7 @@ ligand_pose = []
 for res in ligand_pdb:
     ligand_pose.append(pose1.pdb_info().pdb2pose('X', res))
  
+#Running the Code
 for i in range(1, 5): 
     alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "test" + str(i) + "Log", "test" + str(i) + "Output", 8, 4, 50)
             
