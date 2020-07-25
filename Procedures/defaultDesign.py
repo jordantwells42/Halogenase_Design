@@ -3,15 +3,12 @@ import math
 
 from pyrosetta import *
 from rosetta import *
-
 from pyrosetta.teaching import *
 from pyrosetta.toolbox import *
 from rosetta.core.pack.task import *
 from rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.protocols.backrub import *
 from pyrosetta.toolbox import generate_resfile_from_pose
-from pyrosetta.rosetta.protocols.protein_interface_design import *
-from pyrosetta.rosetta.protocols.protein_interface_design.movers import *
 import rosetta.protocols.rigid as rigid_moves
 
 init()
@@ -57,7 +54,8 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     ref_seq = ref_pose.sequence()
     
     log_all = open("Logs/" + log_output + "_all.txt", "w+")
-     
+    
+    
     """
     ===========================
     Defining Movers
@@ -310,6 +308,10 @@ ref = pose_from_pdb("RefPDBs/complex1.clean.pdb")
 
 #Establishing scorefunction
 scoreFA = get_fa_scorefxn()
+
+from scoreDesign import FavorReferenceResidue
+fnr = FavorReferenceResidue(pose1).scoreType
+scoreFA.set_weight(fnr, 2301.0)
 
 #Creating fold tree, A will be rigid and X will be movable
 #setup_foldtree(pose, "A_X", Vector1([1]))
