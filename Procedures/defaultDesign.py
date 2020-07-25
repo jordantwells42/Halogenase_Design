@@ -275,7 +275,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
                 final_mutation += str(init_seq[res - 1]) + str(res) + str(designed_seq[res - 1]) + " "
         
         output = ""
-        output += "\n\nFinal Score : " + str(scorefxn(p)) + "\n"
+        output += "Final Score : " + str(scorefxn(p)) + "\n"
         output += "Final Mutations: " + final_mutation + "\n"
         
         #Specific to alanine sequence recovering
@@ -288,8 +288,8 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
             
         output += "Sequence Identity : " + str((len(active_site_res_pose) - (mismatches))/len(active_site_res_pose)) + "\n"
         output += "Comparison (Reference:Designed): " + comparison + "\n"
-        log.write(output)
-        log_all.write("Job " + str(job) + ": \n" + output)
+        log.write("\n\n" + output)
+        log_all.write("Job " + str(job) + ": \n" + output + "\n\n")
        
         log.close()
         
@@ -331,7 +331,5 @@ for i in range(1, 5):
     alaDesign(pose2, ref, scoreFA, active_site_pose, ligand_pose, "reftest" + str(i) + "Log", "reftest" + str(i) + "Output", 8, 4, 50)
     #alaDesign(pose3, ref, scoreFA, active_site_pose, ligand_pose, "ref2Test2test1_1_" + str(i) + "Log", "ref2Test2test1_1_" + str(i) + "Output", 8, 4, 50)
             
-    
-    
     
     
