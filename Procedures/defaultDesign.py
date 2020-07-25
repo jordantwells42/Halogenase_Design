@@ -299,7 +299,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
 #Make sure that your protein is chain A and your protein ligand is chain X
 cleanATOM("alaComplex1.pdb")
 pose1 = pose_from_pdb("alaComplex1.clean.pdb")
-pose2 = pose_from_pdb("test3Output_6.pdb")
+#pose2 = pose_from_pdb("test3Output_6.pdb")
 ref = pose_from_pdb("complex1.clean.pdb")
 
 #Establishing scorefunction
