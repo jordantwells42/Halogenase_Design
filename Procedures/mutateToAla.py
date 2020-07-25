@@ -8,7 +8,7 @@ from rosetta import *
 from pyrosetta.toolbox.mutants import *
 init()
 
-to_mutate = pose_from_pdb("PDBs/RebH.pdb")
+to_mutate = pose_from_pdb("RefPDBs/RebH.pdb")
 
 active_site_res_pdb = [357, 461, 465]
 active_site_res_pose = []
