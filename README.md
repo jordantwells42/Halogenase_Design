@@ -1,11 +1,21 @@
 # Halogenase_Design
 For the design of Tryptophan Halogenases with the Rosetta Software Suite.
 
-### Procedures
+## Procedures
 defaultDesign - Standard design procedure 
 
 coupledmovesDesign - Coupled moves design procedure, currently not operable, needs to be updated
 
+mutateToAla - Mutates the active site of a protein to be all alanines
 
-### Accesories
-mutatetoAla - Mutates the active site residues of a given pose to alanine
+sysPyRosetta - Appends the PyRosetta software to the path so it can be imported by other scripts
+### Logs
+Stores log files
+### RefPDBs
+Stores important and highly referenced PDB files
+### PDBs
+Stores outputted PDBs
+
+
+
+
