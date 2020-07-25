@@ -1,14 +1,21 @@
+import rosetta, pyrosetta
+from rosetta import *
 from pyrosetta import *
-from rosetta.core.scoring.methods import ContextIndependentOneBodyEnergy
+from rosetta.core.scoring import *
+from rosetta.core.scoring.methods import ContextDependentOneBodyEnergy
 
-init()
+@pyrosetta.EnergyMethod()
+class FavorReferenceResidue(ContextDependentOneBodyEnergy):
 
-class FavorNativeResidue(ContextIndependentOneBodyEnergy):
-
-    def __init__(self, ref_pose):
-        ContextIndependentOneBodyEnergy.__init__(self, self.creator())
-        self.ref_pose = ref_pose
+    def __init__(self, reference_pose = Pose()):
+        ContextDependentOneBodyEnergy.__init__(self, self.creator())
+        self.reference_pose = reference_pose
      
     def residue_energy(self, res, pose, emap):
-        if res == self.ref_pose.residue(res.seqpos()):
-            emap.get().set(self.scoreType, -1.0)
+        if len(self.reference_pose.sequence()) == 0:
+            emap.set(self.scoreType, 0)
+            return
+        elif res == self.reference_pose.residue(res.seqpos()):
+            emap.set(self.scoreType, -1.0)
+        else:
+            emap.set(self.scoreType, 0)
