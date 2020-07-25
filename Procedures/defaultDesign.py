@@ -311,7 +311,7 @@ scoreFA = get_fa_scorefxn()
 
 from scoreDesign import FavorReferenceResidue
 fnr = FavorReferenceResidue(pose1).scoreType
-scoreFA.set_weight(fnr, 2301.0)
+scoreFA.set_weight(fnr, 100000000000000000000.0)
 
 #Creating fold tree, A will be rigid and X will be movable
 #setup_foldtree(pose, "A_X", Vector1([1]))
