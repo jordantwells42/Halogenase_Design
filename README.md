@@ -1,5 +1,5 @@
-# Halogenase_Design
-For the design of Tryptophan Halogenase with the Rosetta Software Suite.
+### Halogenase_Design
+For the design of Tryptophan Halogenases with the Rosetta Software Suite.
 
 ## Procedures
 defaultDesign - Standard design procedure 
