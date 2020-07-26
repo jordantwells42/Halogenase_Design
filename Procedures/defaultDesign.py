@@ -10,6 +10,7 @@ from rosetta.core.pack.task import TaskFactory
 from pyrosetta.rosetta.protocols.backrub import *
 from pyrosetta.toolbox import generate_resfile_from_pose
 import rosetta.protocols.rigid as rigid_moves
+from pyrosetta.rosetta.core.scoring import *
 
 init()
 
@@ -43,7 +44,7 @@ Performs high resolution refinement and design of an enzyme active site with an 
 """
 
 def alaDesign(pose_in, ref_pose, scorefxn, active_site_res_pose = [], ligand_res_pose = [], log_output = "designLog", 
-job_output = "output", jobs = 1, outer_cycles = 4, inner_cycles = 50, linear_temp = False, linear_rep = True, linear_perturb = False,
+jobs = 1, outer_cycles = 4, inner_cycles = 50, linear_temp = False, linear_rep = True, linear_perturb = False,
 temp_init = 100, temp_final = 10, rep_weight_init = 0.05, rep_weight_final = 0.55, 
 trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves = 10):
     
@@ -54,7 +55,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     ref_seq = ref_pose.sequence()
     
     log_all = open("Logs/" + log_output + "_all.txt", "w+")
-    
+    csv = open("CSVs/" + log_output + ".csv", "w+")
     
     """
     ===========================
@@ -181,12 +182,13 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     
     
     for job in range(1, jobs + 1):
-    
         #2. Housekeeping
-        log = open("Logs/" + log_output + "_" + str(job) + ".txt", "w+")
+        file_name = str(log_output + "_" + str(job))
+        
+        log = open("Logs/" + file_name + ".txt", "w+")
         
         p.assign(pose_in)
-        p.pdb_info().name(job_output + '_' + str(job))
+        p.pdb_info().name(file_name)
         
         
         kT = temp_init
@@ -269,35 +271,45 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         mc.recover_low(p)
         pyMOLMover.apply(p)
         
-        p.dump_pdb("PDBs/" + job_output + "_" + str(job) + ".pdb")
+        p.dump_pdb("PDBs/" + log_output + "_" + str(job) + ".pdb")
         
-        designed_seq = p.sequence()
+        final_seq = p.sequence()
         
         final_mutation = ""
         
         for res in active_site_res_pose:
-            if init_seq[res - 1] != designed_seq[res - 1]:
-                final_mutation += str(init_seq[res - 1]) + str(res) + str(designed_seq[res - 1]) + " "
+            if init_seq[res - 1] != final_seq[res - 1]:
+                final_mutation += str(init_seq[res - 1]) + str(res) + str(final_seq[res - 1]) + " "
         
-        output = ""
-        output += "Final Score : " + str(scorefxn(p)) + "\n"
-        output += "Final Mutations: " + final_mutation + "\n"
+        
+        final_energy = str(scorefxn(p))
+        final_rmsd = all_atom_rmsd(p, ref_pose)
         
         #Specific to alanine sequence recovering
-        mismatches = 0
+        mutations = 0
         comparison = ""
         for res in active_site_res_pose:
-            if ref_seq[res - 1] != designed_seq[res - 1]:
-                mismatches += 1
-            comparison += ref_seq[res - 1] + ":" + designed_seq[res - 1] + " "
-            
-        output += "Sequence Identity : " + str((len(active_site_res_pose) - (mismatches))/len(active_site_res_pose)) + "\n"
-        output += "Comparison (Reference:Designed): " + comparison + "\n"
-        log.write("\n\n" + output)
-        log_all.write("Job " + str(job) + ": \n" + output + "\n\n")
-       
+            if ref_seq[res - 1] != final[res - 1]:
+                mutations += 1
+            comparison += ref_seq[res - 1] + ":" + final_seq[res - 1] + " "
+        
+        sequence_identity = str((len(active_site_res_pose) - (mutations))/len(active_site_res_pose))
+
+        outputLog = ""
+        outputLog += "Final Score : " + final_energy + "\n"
+        outputLog += "Final Mutations: " + final_mutation + "\n"          
+        outputLog += "Sequence Identity : " + sequence_identity + "\n"
+        outputLog += "Comparison (Reference:Designed): " + comparison + "\n"
+        
+        log.write("\n\n" + outputLog)
+        log_all.write("Job " + str(job) + ": \n" + outputLog + "\n\n")
         log.close()
         
+        outputCSV = file_name + "," + final_energy + "," + +final_rmsd + "," + sequence_identity + "," +  mutations + "," + final_mutation + "," + final_seq + "\n"
+        csv.write(outputCSV)
+        
+    log_all.close()
+    csv.close()
         
 #Running the code!
 
@@ -309,10 +321,16 @@ ref = pose_from_pdb("RefPDBs/complex1.clean.pdb")
 #Establishing scorefunction
 scoreFA = get_fa_scorefxn()
 
+"""
 from scoreDesign import FavorReferenceResidue
 fnr = FavorReferenceResidue(pose1).scoreType
+<<<<<<< Updated upstream
 scoreFA.set_weight(fnr, 2301.0)
 
+=======
+scoreFA.set_weight(fnr, 100000000000000000000.0)
+"""
+>>>>>>> Stashed changes
 #Creating fold tree, A will be rigid and X will be movable
 #setup_foldtree(pose, "A_X", Vector1([1]))
 ft = FoldTree()
@@ -338,7 +356,7 @@ for res in ligand_pdb:
  
 #Running the Code
 for i in range(1, 5): 
-    alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "test" + str(i) + "Log", "test" + str(i) + "Output", 8, 4, 50)
+    alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "test" + str(i), 8, 4, 50)
             
     
     
