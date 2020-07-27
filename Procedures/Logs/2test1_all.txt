@@ -1,0 +1,56 @@
+Job 1: 
+Final Score : -431.11804088216866
+Final Mutations: A356L A357T A358S A460M A461L A462F A464Q A466L 
+Sequence Identity : 0.3333333333333333
+Comparison (Reference:Designed): L:L E:T S:S E:M E:L F:F N:Q F:A W:L 
+
+
+Job 2: 
+Final Score : -429.019162910338
+Final Mutations: A356L A357G A358S A460M A464Q A465E A466L 
+Sequence Identity : 0.2222222222222222
+Comparison (Reference:Designed): L:L E:G S:S E:M E:A F:A N:Q F:E W:L 
+
+
+Job 3: 
+Final Score : -433.6068214708035
+Final Mutations: A356L A357T A358S A460M A461L A462F A464Q A465L A466F 
+Sequence Identity : 0.3333333333333333
+Comparison (Reference:Designed): L:L E:T S:S E:M E:L F:F N:Q F:L W:F 
+
+
+Job 4: 
+Final Score : -438.8767535022155
+Final Mutations: A356L A357T A358S A460M A461L A464Q A465S A466L 
+Sequence Identity : 0.2222222222222222
+Comparison (Reference:Designed): L:L E:T S:S E:M E:L F:A N:Q F:S W:L 
+
+
+Job 5: 
+Final Score : -420.3499526058385
+Final Mutations: A356L A357T A358S A460M A461L A464Q 
+Sequence Identity : 0.2222222222222222
+Comparison (Reference:Designed): L:L E:T S:S E:M E:L F:A N:Q F:A W:A 
+
+
+Job 6: 
+Final Score : -433.12707911879767
+Final Mutations: A356L A357T A358S A460M A464Q A466F 
+Sequence Identity : 0.2222222222222222
+Comparison (Reference:Designed): L:L E:T S:S E:M E:A F:A N:Q F:A W:F 
+
+
+Job 7: 
+Final Score : -428.1571767203828
+Final Mutations: A356L A357T A358S A460M A461L A464Q 
+Sequence Identity : 0.2222222222222222
+Comparison (Reference:Designed): L:L E:T S:S E:M E:L F:A N:Q F:A W:A 
+
+
+Job 8: 
+Final Score : -427.83033698387453
+Final Mutations: A356L A357T A358S A460M A461L A462F A464Q 
+Sequence Identity : 0.3333333333333333
+Comparison (Reference:Designed): L:L E:T S:S E:M E:L F:F N:Q F:A W:A 
+
+
