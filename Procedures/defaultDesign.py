@@ -282,30 +282,30 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
                 final_mutation += str(init_seq[res - 1]) + str(res) + str(final_seq[res - 1]) + " "
         
         
-        final_energy = str(scorefxn(p))
+        final_energy = scorefxn(p)
         final_rmsd = all_atom_rmsd(p, ref_pose)
         
         #Specific to alanine sequence recovering
         mutations = 0
         comparison = ""
         for res in active_site_res_pose:
-            if ref_seq[res - 1] != final[res - 1]:
+            if ref_seq[res - 1] != final_seq[res - 1]:
                 mutations += 1
             comparison += ref_seq[res - 1] + ":" + final_seq[res - 1] + " "
         
-        sequence_identity = str((len(active_site_res_pose) - (mutations))/len(active_site_res_pose))
+        sequence_identity = (len(active_site_res_pose) - (mutations))/len(active_site_res_pose)
 
         outputLog = ""
-        outputLog += "Final Score : " + final_energy + "\n"
+        outputLog += "Final Score : " + str(final_energy) + "\n"
         outputLog += "Final Mutations: " + final_mutation + "\n"          
-        outputLog += "Sequence Identity : " + sequence_identity + "\n"
+        outputLog += "Sequence Identity : " + str(sequence_identity) + "\n"
         outputLog += "Comparison (Reference:Designed): " + comparison + "\n"
         
         log.write("\n\n" + outputLog)
         log_all.write("Job " + str(job) + ": \n" + outputLog + "\n\n")
         log.close()
         
-        outputCSV = file_name + "," + final_energy + "," + +final_rmsd + "," + sequence_identity + "," +  mutations + "," + final_mutation + "," + final_seq + "\n"
+        outputCSV = file_name + "," + str(final_energy) + "," + str(final_rmsd) + "," + str(sequence_identity) + "," +  str(mutations) + "," + final_mutation + "," + final_seq + "\n"
         csv.write(outputCSV)
         
     log_all.close()
@@ -330,7 +330,7 @@ scoreFA.set_weight(fnr, 2301.0)
 =======
 scoreFA.set_weight(fnr, 100000000000000000000.0)
 """
->>>>>>> Stashed changes
+
 #Creating fold tree, A will be rigid and X will be movable
 #setup_foldtree(pose, "A_X", Vector1([1]))
 ft = FoldTree()

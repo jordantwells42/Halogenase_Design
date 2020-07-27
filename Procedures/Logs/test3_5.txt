@@ -1,0 +1,22 @@
+Outer Cycle 1: 
+Score: -838.0474726427457
+Mutations : A356L A357T A358S A460L A461L A462F A464Q A465G  
+
+Outer Cycle 2: 
+Score: -698.4078692127491
+Mutations :  
+
+Outer Cycle 3: 
+Score: -572.3698668425883
+Mutations : L460M L461T A466L  
+
+Outer Cycle 4: 
+Score: -434.81085112537056
+Mutations :  
+
+
+
+Final Score : -434.81085112537056
+Final Mutations: A356L A357T A358S A460M A461T A462F A464Q A465G A466L 
+Sequence Identity : 0.3333333333333333
+Comparison (Reference:Designed): L:L E:T S:S E:M E:T F:F N:Q F:G W:L 
