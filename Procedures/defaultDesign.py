@@ -356,7 +356,7 @@ for res in ligand_pdb:
  
 #Running the Code
 for i in range(1, 5): 
-    alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "2test" + str(i), 8, 4, 50)
+    alaDesign(pose1, ref, scoreFA, active_site_pose, ligand_pose, "3test" + str(i), 8, 4, 50)
             
     
     
