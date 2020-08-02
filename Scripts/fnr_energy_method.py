@@ -14,7 +14,6 @@ class FavorReferenceResidue(ContextDependentOneBodyEnergy):
     def residue_energy(self, res, pose, emap):
         if len(self.reference_pose.sequence()) == 0:
             emap.set(self.scoreType, 0)
-            return
         elif res == self.reference_pose.residue(res.seqpos()):
             emap.set(self.scoreType, -1.0)
         else:
