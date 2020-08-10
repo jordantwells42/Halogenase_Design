@@ -6,7 +6,6 @@ import sys
 #Place your rosetta directory here
 sys.path.append('/mnt/c/Users/jorda/Desktop/Software/PyRosetta')
 
-
 import random
 import math
 
@@ -21,6 +20,7 @@ from pyrosetta.rosetta.protocols.protein_interface_design import FavorNativeResi
 from pyrosetta.rosetta.protocols.minimization_packing import MinMover, PackRotamersMover
 from pyrosetta.rosetta.protocols.analysis.simple_metrics import SequenceRecoveryMetric
 from pyrosetta.rosetta.core.select.residue_selector import ResidueIndexSelector
+from pyrosetta.rosetta.protocols.docking import setup_foldtree
 import rosetta.protocols.rigid as rigid_moves
 from pyrosetta.rosetta.core.scoring import *
 init()
@@ -31,7 +31,7 @@ temp_init = 100, temp_final = 10, rep_weight_init = 0.05, rep_weight_final = 0.5
 trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves = 10):
     """
     ===========================
-    def alaDesign:
+    def recover_sequence:
     Performs high resolution refinement and design of an enzyme active site with an amino acid/protein substrate
     ===========================
         pose_in: pose to be designed
@@ -266,7 +266,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
             #Outputs the mutations caused from each outer cycle
             mutation = ""
             for res in active_site_res_pose:
-                if pre_seq[res - 1] != post_seq[res - 1]:
+                if pre_seq[res - 1] != init_seq[res - 1]:
                     mutation += str(pre_seq[res - 1]) + str(res) + str(post_seq[res - 1]) + " "
             
             log.write(f"Outer Cycle {str(i)}:\n")
@@ -292,22 +292,30 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         final_rmsd = all_atom_rmsd(p, ref_pose)
         
         #Specific to sequence recovering
-        mutations = 0
+        away_from_ref = 0
         comparison = ""
         for res in active_site_res_pose:
             if ref_seq[res - 1] != final_seq[res - 1]:
-                mutations += 1
-            comparison += f"{ref_seq[res - 1]}:{final_seq[res - 1]} "
+                away_from_ref += 1
+            if init_seq[res - 1] != final_seq[res - 1]:
+                comparison += f"{ref_seq[res - 1]}:{final_seq[res - 1]} "
 
+        """
         seq_recoverer = SequenceRecoveryMetric()
         seq_recoverer.set_comparison_pose(ref_pose)
         
         selector = ResidueIndexSelector
-        [selector.append_index(res) for res in active_site_res_pose]
+        selector.append_index(active_site_res_pose)
+        for res in active_site_res_pose:
+            print(type(res))
+            print(type(int(res)))
+            selector.append_index(res)
         
         seq_recoverer.set_residue_selector(selector)
         seq_recovery = seq_recoverer.calculate(p)
-        
+        """
+        seq_recovery = (len(active_site_res_pose) - away_from_ref)/(len(active_site_res_pose))
+
         #Outputting Final Information
         
         outputLog = ""
@@ -320,7 +328,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         log_all.write("Job " + str(job) + ": \n" + outputLog + "\n\n")
         log.close()
         
-        outputCSV = f"{file_name}, {str(final_energy)}, {str(final_rmsd)}, {str(sequence_identity)}, {str(mutations)}, {final_mutation}, {final_seq}\n"
+        outputCSV = f"{file_name}, {str(final_energy)}, {str(final_rmsd)}, {str(seq_recovery)}, {str(mutations)}, {final_mutation}, {final_seq}\n"
         csv.write(outputCSV)
         
     log_all.close()
@@ -336,20 +344,23 @@ ref = pose_from_pdb("RefPDBs/complex1.clean.pdb")
 #Establishing scorefunction
 scoreFA = get_fa_scorefxn()
 
-
+"""
 from scoreDesign import FavorReferenceResidue
 fnr = FavorReferenceResidue(pose1).scoreType
 scoreFA.set_weight(fnr, 100000000000000000000.0)
-
+"""
 
 #Creating fold tree, A will be rigid and X will be movable
-#setup_foldtree(pose, "A_X", Vector1([1]))
+#setup_foldtree(pose1, "A_X", Vector1([1]))
+
 ft = FoldTree()
 ft.add_edge(357, 1, -1)
 ft.add_edge(357, 528, -1)
 ft.add_edge(357, 529, 1)
 ft.add_edge(529, 529, -1)
 pose1.fold_tree(ft)
+
+
 
 active_site_pdb = [357, 461, 465]
 active_site_pose = []
