@@ -23,11 +23,12 @@ from pyrosetta.rosetta.core.select.residue_selector import ResidueIndexSelector
 from pyrosetta.rosetta.protocols.docking import setup_foldtree
 import rosetta.protocols.rigid as rigid_moves
 from pyrosetta.rosetta.core.scoring import *
+from rosetta.protocols.rosetta_scripts import *
 init()
 
 def recover_sequence(pose_in, ref_pose, scorefxn, active_site_res_pose = [], ligand_res_pose = [], log_output = "designLog", 
 jobs = 1, outer_cycles = 4, inner_cycles = 50, linear_temp = False, linear_rep = True, linear_perturb = False,
-temp_init = 100, temp_final = 10, rep_weight_init = 0.05, rep_weight_final = 0.55, 
+temp_init = 10, temp_final = 0.6, rep_weight_init = 0.05, rep_weight_final = 0.55, 
 trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves = 10):
     """
     ===========================
@@ -149,6 +150,30 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     
     #6 Initializing pyMOLMover
     pyMOLMover = pyrosetta.PyMOLMover()
+
+    pose = pose_from_pdb("RefPDBs/RebH.pdb")
+
+    script = """
+    <ROSETTASCRIPTS>
+        <SCOREFXNS>
+        </SCOREFXNS>
+        <RESIDUE_SELECTORS>
+        </RESIDUE_SELECTORS>
+        <MOVE_MAP_FACTORIES>
+        </MOVE_MAP_FACTORIES>
+        <SIMPLE_METRICS>
+        </SIMPLE_METRICS>
+        <MOVERS>
+        <FavorSequenceProfile name="favor_native" weight="100000" use_current="true" matrix="IDENTITY"/>
+        </MOVERS>
+        <PROTOCOLS>
+        <Add mover_name="favor_native"/>
+        </PROTOCOLS>
+    </ROSETTASCRIPTS>
+    """
+
+    xml = XmlObjects.create_from_string(script)
+    protocol = xml.get_mover("ParsedProtocol")
     
     
     """
@@ -222,7 +247,6 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
             
             #4. Inner Cycle
             for j in range(1, inner_cycles + 1):
-                FavorNativeResidue(p, 100000)
                 if linear_temp:
                     kT += kT + slopekT
                 else:
@@ -242,6 +266,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
                 perturbMover.rot_magnitude(rot_mag)
                 
                 #Mover Execution
+                protocol.apply(p)
                 perturbMover.apply(p)
                 minMover_rb_bb.apply(p)
                 
@@ -297,8 +322,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         for res in active_site_res_pose:
             if ref_seq[res - 1] != final_seq[res - 1]:
                 away_from_ref += 1
-            if init_seq[res - 1] != final_seq[res - 1]:
-                comparison += f"{ref_seq[res - 1]}:{final_seq[res - 1]} "
+            comparison += f"{ref_seq[res - 1]}:{final_seq[res - 1]} "
 
         """
         seq_recoverer = SequenceRecoveryMetric()
@@ -328,7 +352,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         log_all.write("Job " + str(job) + ": \n" + outputLog + "\n\n")
         log.close()
         
-        outputCSV = f"{file_name}, {str(final_energy)}, {str(final_rmsd)}, {str(seq_recovery)}, {str(mutations)}, {final_mutation}, {final_seq}\n"
+        outputCSV = f"{file_name}, {str(final_energy)}, {str(final_rmsd)}, {str(seq_recovery)}, {str(away_from_ref)}, {final_mutation}, {final_seq}\n"
         csv.write(outputCSV)
         
     log_all.close()
@@ -377,7 +401,7 @@ for res in ligand_pdb:
     ligand_pose.append(pose1.pdb_info().pdb2pose('X', res))
  
 #Running the Code
-recover_sequence(pose1, ref, scoreFA, active_site_pose, ligand_pose, "scoredesigntest", 8, 3, 5)
+recover_sequence(pose1, ref, scoreFA, active_site_pose, ligand_pose, "longtest", 4, 8, 100)
             
     
     
