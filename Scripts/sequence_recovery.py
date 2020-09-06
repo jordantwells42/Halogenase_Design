@@ -24,11 +24,12 @@ from pyrosetta.rosetta.protocols.docking import setup_foldtree
 import rosetta.protocols.rigid as rigid_moves
 from pyrosetta.rosetta.core.scoring import *
 from rosetta.protocols.rosetta_scripts import *
+
 init()
 
 def recover_sequence(pose_in, ref_pose, scorefxn, active_site_res_pose = [], ligand_res_pose = [], log_output = "designLog", 
 jobs = 1, outer_cycles = 4, inner_cycles = 50, linear_temp = False, linear_rep = True, linear_perturb = False,
-temp_init = 10, temp_final = 0.6, rep_weight_init = 0.05, rep_weight_final = 0.55, 
+temp_init = 10, temp_final = 0.6, rep_weight_init = 0.15, rep_weight_final = 0.55, 
 trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves = 10):
     """
     ===========================
@@ -125,7 +126,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     
     #3. Initializing minMovers
     #   minMover_rb_bb minimizes rigid body and backbone DoFs
-    minMover_rb_bb = MinMover("dfpmin_armijo_nonmonotone")    
+      
     minMover_rb_bb.movemap(movemap_rb_bb)
     minMover_rb_bb.score_function(scorefxn)
    
@@ -150,8 +151,6 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     
     #6 Initializing pyMOLMover
     pyMOLMover = pyrosetta.PyMOLMover()
-
-    pose = pose_from_pdb("RefPDBs/RebH.pdb")
 
     script = """
     <ROSETTASCRIPTS>
@@ -186,8 +185,8 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         Meat of the design, applys all the movers and controls simulated annealing
     5. Outputting Job information
     """
- 
-    p = Pose()
+
+
     
     #1. Creating incrementation factors for rep_weight, kT, translation, and rotation
     #   Creating temperature incrementation
@@ -198,9 +197,9 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     
     #   Creating repulsion incrementation
     if linear_rep:
-        slopeRep = (rep_weight_final - rep_weight_init) / (outer_cycles)
+        slopeRep = (rep_weight_final - rep_weight_init) / (inner_cycles)
     else:    
-        gammaRep = math.pow((rep_weight_final / rep_weight_init), (1.0 / (outer_cycles)))
+        gammaRep = math.pow((rep_weight_final / rep_weight_init), (1.0 / (inner_cycles)))
     
     #   Creating perturbation incrementation
     if linear_perturb:
@@ -211,6 +210,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         gammaRot = math.pow((rot_final / rot_init), (1.0 / (outer_cycles * inner_cycles)))
     
     
+    p = Pose()
     
     for job in range(1, jobs + 1):
         #2. Housekeeping
@@ -233,12 +233,11 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
         #3. Outer Cycle
         for i in range(1, outer_cycles + 1):
             
+            rep_weight = rep_weight_init
+
             pre_seq = p.sequence()
             
-            if linear_rep:
-                rep_weight += slopeRep
-            else:    
-                rep_weight = rep_weight * gammaRep
+            
                 
             scorefxn.set_weight(fa_rep, rep_weight)
             
@@ -247,6 +246,13 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
             
             #4. Inner Cycle
             for j in range(1, inner_cycles + 1):
+                
+                if linear_rep:
+                    rep_weight += slopeRep
+                else:    
+                    rep_weight = rep_weight * gammaRep  
+                scorefxn.set_weight(fa_rep, rep_weight) 
+                           
                 if linear_temp:
                     kT += kT + slopekT
                 else:
@@ -266,7 +272,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
                 perturbMover.rot_magnitude(rot_mag)
                 
                 #Mover Execution
-                protocol.apply(p)
+                #protocol.apply(p)
                 perturbMover.apply(p)
                 minMover_rb_bb.apply(p)
                 
@@ -313,6 +319,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
                 final_mutation += str(init_seq[res - 1]) + str(res) + str(final_seq[res - 1]) + " "
         
         
+        scorefxn.set_weight(fa_rep, rep_weight_final)
         final_energy = scorefxn(p)
         final_rmsd = all_atom_rmsd(p, ref_pose)
         
@@ -399,9 +406,10 @@ ligand_pose = []
        
 for res in ligand_pdb:
     ligand_pose.append(pose1.pdb_info().pdb2pose('X', res))
+
  
 #Running the Code
-recover_sequence(pose1, ref, scoreFA, active_site_pose, ligand_pose, "longtest", 4, 8, 100)
+recover_sequence(pose1, ref, scoreFA, active_site_pose, ligand_pose, "poggerino", 8, 4, 75)
             
     
     
