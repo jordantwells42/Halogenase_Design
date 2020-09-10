@@ -97,12 +97,13 @@ def design(pose_in, ref, scorefxn, active_site_res_pose = [], ligand_res_pose = 
     # a. Creating necessary resfile and movemaps
 
     # Using "ALLAAxc" for the active site residues allows them to be mutated to all AAs besides cysteine
-    res_to_pack = {res : "ALLAAxc" for res in active_site_res_pose}
+    sc_to_pack = {res : "ALLAAxc" for res in active_site_res_pose}
 
     # Using "NATAA" for the ligand residues allows them to switch to different rotamers
-    res_to_pack.update({res :  "NATAA" for res in ligand_res_pose})
+    lig_to_pack = {res :  "NATAA" for res in ligand_res_pose}
      
-    generate_resfile_from_pose(pose, "design.resfile", False, specific = res_to_pack)
+    generate_resfile_from_pose(pose, "sc.resfile", False, specific = sc_to_pack)
+    generate_resfile_from_pose(pose, "lig.resfile", False, specific = lig_to_pack)
     
     res_to_work = []
     for res in active_site_res_pose:
@@ -142,9 +143,13 @@ def design(pose_in, ref, scorefxn, active_site_res_pose = [], ligand_res_pose = 
 
     # d. Initializing pack_mover: determines which side chain rotamers lead to the lowest energy
 
-    pack_design = TaskFactory.create_packer_task(pose)
-    parse_resfile(pose, pack_design, "design.resfile")
-    pack_mover = PackRotamersMover(scorefxn, pack_design)
+    pack_design_sc = TaskFactory.create_packer_task(pose)
+    parse_resfile(pose, pack_design_sc, "sc.resfile")
+    pack_mover_sc = PackRotamersMover(scorefxn, pack_design_sc)
+
+    pack_design_lig = TaskFactory.create_packer_task(pose)
+    parse_resfile(pose, pack_design_lig, "lig.resfile")
+    pack_mover_lig = PackRotamersMover(scorefxn, pack_design_lig)
 
     # e. Initializing backrub_mover: performs local backbone motion on active site res to 
     #      allow for backbone flexibility
@@ -227,21 +232,28 @@ def design(pose_in, ref, scorefxn, active_site_res_pose = [], ligand_res_pose = 
                 perturb_mover.rot_magnitude(rot_mag)
                 
                 # e. Mover Execution
+                # Protein Move
+                if random.random() < 0.5:
+                    backrub_mover.apply(p)
 
-                perturb_mover.apply(p)
+                    pack_design_sc = TaskFactory.create_packer_task(p)
+                    parse_resfile(p, pack_design_sc, "sc.resfile")
+                    pack_mover_sc = PackRotamersMover(scorefxn, pack_design_sc)
+                    pack_mover_sc.apply(p)
+
+                # Ligand Move
+                else:
+                    perturb_mover.apply(p)
+
+                    pack_design_lig = TaskFactory.create_packer_task(p)
+                    parse_resfile(p, pack_design_lig, "lig.resfile")
+                    pack_mover_lig = PackRotamersMover(scorefxn, pack_design_lig)
+                    pack_mover_lig.apply(p)
+
+                
                 minmover_rb_bb.apply(p)
-
-                pack_design = TaskFactory.create_packer_task(p)
-                parse_resfile(p, pack_design, "design.resfile")
-                pack_mover = PackRotamersMover(scorefxn, pack_design)
-                pack_mover.apply(p)
-
-                backrub_mover.apply(p)
-
                 minmover_bb_chi.apply(p)
                 
-                
-
                 mc.boltzmann(p)
                 pymol_mover.apply(p)
 
@@ -316,4 +328,4 @@ for res in ligand_pdb:
 
  
 #Running the Code
-design(to_design, ref_enz, scoreFA, active_site_pose, ligand_pose, "design_test_123")
+design(to_design, ref_enz, scoreFA, active_site_pose, ligand_pose, "design_cm_test_2")

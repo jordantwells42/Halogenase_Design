@@ -126,7 +126,7 @@ trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves
     
     #3. Initializing minMovers
     #   minMover_rb_bb minimizes rigid body and backbone DoFs
-      
+    minMover_rb_bb = MinMover("dfpmin_armijo_nonmonotone")
     minMover_rb_bb.movemap(movemap_rb_bb)
     minMover_rb_bb.score_function(scorefxn)
    

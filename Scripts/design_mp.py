@@ -8,6 +8,7 @@ sys.path.append('/mnt/c/Users/jorda/Desktop/Software/PyRosetta')
 
 import random
 import math
+import multiprocessing as mp
 
 from pyrosetta import *
 from rosetta import *
@@ -24,10 +25,13 @@ import rosetta.protocols.rigid as rigid_moves
 from pyrosetta.rosetta.core.scoring import *
 from rosetta.protocols.rosetta_scripts import *
 
-init()
+
+init("-use_time_as_seed -seed_offset 10")
+
+OUTPUT = mp.Queue()
 
 def design(pose_in, ref, scorefxn, active_site_res_pose = [], ligand_res_pose = [], output = "design", 
-    jobs = 8, outer_cycles = 4, inner_cycles = 60,
+    job = 1, outer_cycles = 4, inner_cycles = 60,
     temp_init = 10, temp_final = 0.6, rep_weight_init = 0.15, rep_weight_final = 0.55, 
     trans_init = 1.5, trans_final = 0.1, rot_init = 20, rot_final = 2, backrub_moves = 10):
     """
@@ -68,14 +72,13 @@ def design(pose_in, ref, scorefxn, active_site_res_pose = [], ligand_res_pose = 
     1. Create working poses and all necessary log files
     ===========================
     """
+    init()
     pose = Pose()
     pose.assign(pose_in)
 
     init_seq = pose.sequence()
     
-    # csv: contains all of the log information from each job
-    csv = open("CSVs/" + output + ".csv", "w+")
-    csv.write("File Name, Final Energy, Final RMSD, Number of Mutations, Mutations, Final Sequence")
+    
     
     """
     ===========================
@@ -182,110 +185,108 @@ def design(pose_in, ref, scorefxn, active_site_res_pose = [], ligand_res_pose = 
     gamma_trans = math.pow((trans_final / trans_init), (1.0 / (outer_cycles * inner_cycles)))
     gamma_rot = math.pow((rot_final / rot_init), (1.0 / (outer_cycles * inner_cycles)))
 
-    # b. Setting up Jobs
+    # b. Setting up Job
 
+    file_name = str(f"{output}_{str(job)}")
+    
     p = Pose()
-    for job in range(1, jobs + 1):
+    p.assign(pose_in)
+    p.pdb_info().name(file_name)
+    
+    score_fa = get_fa_scorefxn()
 
-        file_name = str(f"{output}_{str(job)}")
-        
-        p.assign(pose_in)
-        p.pdb_info().name(file_name)
-        
-        score_fa = get_fa_scorefxn()
+    kt = temp_init
+    rep_weight = rep_weight_init
+    trans_mag = trans_init
+    rot_mag = rot_init
+    
+    mc = MonteCarlo(p, scorefxn, kt)
 
-        kt = temp_init
-        rep_weight = rep_weight_init
-        trans_mag = trans_init
-        rot_mag = rot_init
-        
-        mc = MonteCarlo(p, scorefxn, kt)
+    # c. Outer Cycle
+    low_pose = Pose()
+    low_pose.assign(pose_in)
+    for _ in range(outer_cycles):
+        rep_weight = rep_weight_init        
 
-        # c. Outer Cycle
-        low_pose = Pose()
-        low_pose.assign(pose_in)
-        for _ in range(outer_cycles):
-            rep_weight = rep_weight_init        
+        # d. Inner Cycle
 
-            # d. Inner Cycle
+        for _ in range(1, inner_cycles + 1):
+            rep_weight += slope_rep
+            scorefxn.set_weight(fa_rep, rep_weight) 
+            minmover_rb_bb.score_function(scorefxn)
+            minmover_bb_chi.score_function(scorefxn)
+            mc.score_function(scorefxn)
+            mc_br.score_function(scorefxn)
 
-            for _ in range(1, inner_cycles + 1):
-                rep_weight += slope_rep
-                scorefxn.set_weight(fa_rep, rep_weight) 
-                minmover_rb_bb.score_function(scorefxn)
-                minmover_bb_chi.score_function(scorefxn)
-                mc.score_function(scorefxn)
-                mc_br.score_function(scorefxn)
+            kt = kt * gamma_kt
+            mc.set_temperature(kt)
+            mc_br.set_temperature(kt)
 
-                kt = kt * gamma_kt
-                mc.set_temperature(kt)
-                mc_br.set_temperature(kt)
+            trans_mag *= gamma_trans
+            rot_mag *= gamma_rot
+            perturb_mover.trans_magnitude(trans_mag)
+            perturb_mover.rot_magnitude(rot_mag)
+            
+            # e. Mover Execution
 
-                trans_mag *= gamma_trans
-                rot_mag *= gamma_rot
-                perturb_mover.trans_magnitude(trans_mag)
-                perturb_mover.rot_magnitude(rot_mag)
-                
-                # e. Mover Execution
+            perturb_mover.apply(p)
+            minmover_rb_bb.apply(p)
 
-                perturb_mover.apply(p)
-                minmover_rb_bb.apply(p)
+            pack_design = TaskFactory.create_packer_task(p)
+            parse_resfile(p, pack_design, "design.resfile")
+            pack_mover = PackRotamersMover(scorefxn, pack_design)
+            pack_mover.apply(p)
 
-                pack_design = TaskFactory.create_packer_task(p)
-                parse_resfile(p, pack_design, "design.resfile")
-                pack_mover = PackRotamersMover(scorefxn, pack_design)
-                pack_mover.apply(p)
+            backrub_mover.apply(p)
 
-                backrub_mover.apply(p)
+            minmover_bb_chi.apply(p)
+            
+            
 
-                minmover_bb_chi.apply(p)
-                
-                
+            mc.boltzmann(p)
+            pymol_mover.apply(p)
 
-                mc.boltzmann(p)
-                pymol_mover.apply(p)
+            low_score = math.inf
 
-                low_score = math.inf
+            score = score_fa(p)
 
-                score = score_fa(p)
+            if score < low_score:
+                low_score = score
+                low_pose.assign(p)
 
-                if score < low_score:
-                    low_score = score
-                    low_pose.assign(p)
-
-                print(score)
-
-            p.assign(low_pose)
-
-        # f. Outputting Job information
+            print(score)
 
         p.assign(low_pose)
 
-        pymol_mover.apply(p)
+    # f. Outputting Job information
 
-        p.dump_pdb(f"PDBs/{file_name}.pdb")
+    p.assign(low_pose)
 
-        final_seq = p.sequence()
-        
-        final_mutation = ""
-        num_mutations = 0
+    pymol_mover.apply(p)
 
-        for res in active_site_res_pose:
-            if init_seq[res - 1] != final_seq[res - 1]:
-                final_mutation += str(init_seq[res - 1]) + str(res) + str(final_seq[res - 1]) + " "
-                num_mutations += 1
-        
-        
-        scorefxn.set_weight(fa_rep, 0.55)
-        final_energy = scorefxn(p)
-        p.delete_residue_slow(529)
-        final_rmsd = all_atom_rmsd(p, ref)
-        
-        csv_output = f"{file_name}, {str(final_energy)}, {str(final_rmsd)}, \
-        {str(num_mutations)}, {final_mutation}, {final_seq}\n"
-        csv.write(csv_output)
+    p.dump_pdb(f"PDBs/{file_name}.pdb")
 
-    csv.close()
+    final_seq = p.sequence()
+    
+    final_mutation = ""
+    num_mutations = 0
+
+    for res in active_site_res_pose:
+        if init_seq[res - 1] != final_seq[res - 1]:
+            final_mutation += str(init_seq[res - 1]) + str(res) + str(final_seq[res - 1]) + " "
+            num_mutations += 1
+    
+    
+    scorefxn.set_weight(fa_rep, 0.55)
+    final_energy = scorefxn(p)
+    p.delete_residue_slow(529)
+    final_rmsd = all_atom_rmsd(p, ref)
+    
+    csv_output = f"{file_name}, {str(final_energy)}, {str(final_rmsd)}, \
+    {str(num_mutations)}, {final_mutation}, {final_seq}\n"
+    OUTPUT.put((job, csv_output))
+
+    
 
 
 to_design = pose_from_pdb("RefPDBs/phe-RebH_2.pdb")
@@ -314,6 +315,26 @@ ligand_pose = []
 for res in ligand_pdb:
     ligand_pose.append(to_design.pdb_info().pdb2pose('X', res))
 
- 
+output = "design_mp_1"
+
+
 #Running the Code
-design(to_design, ref_enz, scoreFA, active_site_pose, ligand_pose, "design_test_123")
+processes = [mp.Process(target = design, args=(to_design, ref_enz, scoreFA, active_site_pose, ligand_pose, output, x)) for x in range(1, 9)]
+
+for process in processes:
+    process.start()
+
+for process in processes:
+    process.join()
+
+results = [OUTPUT.get() for p in processes]
+
+
+# csv: contains all of the log information from each job
+csv = open("CSVs/" + output + ".csv", "w+")
+csv.write("File Name, Final Energy, Final RMSD, Number of Mutations, Mutations, Final Sequence\n")
+
+for result in results:
+    csv.write(result)
+
+csv.close()

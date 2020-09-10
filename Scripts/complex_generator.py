@@ -1,6 +1,6 @@
 enzyme_file_name = input("Input enzyme file name: ")
-protein_ligand_file_name = input("Input protein ligand file name: ")
-complex_name = input("Input complex name: ")
+protein_ligand_file_name = input("Input protein ligand file name (\{name\}_i: ")
+complex_name = input("Input complex name \{name\}_i: ")
 
 for i in range(1, int(input("How many ligand files do you have?: "))  + 1):
 	with open(f"{complex_name}_{i}.pdb", "w+") as f:
